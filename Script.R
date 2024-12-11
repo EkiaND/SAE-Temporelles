@@ -1,6 +1,6 @@
 #' ---
-#' titre: "Analyse de s ́eries temporelles"
-#' author: "Rasmata Sawadogo, Courteney Saint-Hubert , Sidy Diop , ROmain Lesieurs " 
+#' titre: "Analyse des séries temporelles"
+#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesueur" 
 #' date: "28/11/2024"
 #' ---
 
@@ -12,13 +12,13 @@
 
 # Mission 1 
 
-# Chargement des librairie 
+# Chargement des librairies
 library(tabulapdf)
 library(tidyverse)
 library(dplyr)
 library(data.table)
 
-# Extraire les tables de chaque fichier PDF 
+# Extraction des données des fichiers PDF
 café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
                             method = "decide", 
                             encoding = "UTF-8",
@@ -51,6 +51,9 @@ petrol_data <- extract_tables(file = "Futures pétrole Brent - Données Historiq
                               output = "tibble")
 
 
+# Combine les tables extraites pour chaque produit
+# Les données sont initialement sous forme de liste de tables.
+# On utilise `rbindlist` pour fusionner toutes les tables d'un même produit en une seule table.
 
 data_cafe <- as.tibble(rbindlist(café_data))
 data_cacao <- as.tibble(rbindlist(cacao_data))
@@ -59,7 +62,10 @@ data_sucre <- as.tibble(rbindlist(sucre_data))
 data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE))
 
 
-# Renommer les colonnes de chaque table
+# Traitement des tables : renommage des colonnes et conversion des types
+# Pour chaque table, les colonnes sont renommées pour refléter les données qu'elles contiennent.
+# Les colonnes numériques (cotations) sont converties en type `numeric` et les dates en type `Date`.
+
 data_cafe <- data_cafe %>%
   rename(Date = X1, 
          `Closed_Cotation` = X2, 
@@ -73,6 +79,8 @@ data_cafe <- data_cafe %>%
     `Highest_Cotation` = as.numeric(`Highest_Cotation`),
     `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
   )
+
+# Même traitement appliqué à chaque table
 
 data_cacao <- data_cacao %>%
   rename(Date = X1, 
@@ -131,8 +139,9 @@ data_petrol <- data_petrol %>%
   )
 
 
-# Fusionner toutes les tables en un seul dataset
+# Fusionner toutes les données en un seul dataset
+# Cette opération crée une table unique contenant les données de tous les produits.
 dataset <- bind_rows(data_cacao, data_cafe, data_jus_orange, data_sucre, data_petrol)
 
-# Afficher les premières lignes du dataset fusionné
+# Affichage des premières lignes du dataset fusionné pour vérification
 head(dataset)
