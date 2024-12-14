@@ -12,13 +12,28 @@
 
 # Mission 1 
 
+# Liste des librairies nécessaires
+libraries <- c("tabulapdf", "tidyverse", "dplyr", "data.table", "ggplot2", "lubridate")
+
+# Fonction pour installer les librairies manquantes
+install_if_missing <- function(libs) {
+  for (lib in libs) {
+    if (!require(lib, character.only = TRUE)) {
+      install.packages(lib, dependencies = TRUE)
+      library(lib, character.only = TRUE)
+    }
+  }
+}
+
+# Installation des librairies manquantes
+install_if_missing(libraries)
+
 # Chargement des librairies
 library(tabulapdf)
 library(tidyverse)
 library(dplyr)
 library(data.table)
 library(ggplot2)
-library(dplyr)
 library(lubridate)
 
 # Extraction des données des fichiers PDF
@@ -27,7 +42,6 @@ café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
                             encoding = "UTF-8",
                             col_names = FALSE,
                             output = "tibble")
-
 
 cacao_data <- extract_tables("Futures cacao US - Données Historiques.pdf",
                              method = "decide", 
@@ -52,7 +66,6 @@ petrol_data <- extract_tables(file = "Futures pétrole Brent - Données Historiq
                               encoding = "UTF-8",
                               col_names = FALSE,
                               output = "tibble")
-
 
 # Combinaison et traitement des tables pour chaque produit
 
@@ -116,8 +129,7 @@ data_sucre <- as_tibble(rbindlist(sucre_data, fill = TRUE)) %>%
     Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
-
-# Pour le petrol
+# Pour le pétrole
 data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE)) %>%
   rename(Date = X1, 
          Closed_Cotation = X2, 
@@ -132,9 +144,7 @@ data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE)) %>%
     Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
-
-
-# Ensuite on fusion de toutes les données en un seul dataset
+# Fusion de toutes les données en un seul dataset
 dataset <- bind_rows(
   data_cafe %>% mutate(Product = "Café"),
   data_cacao %>% mutate(Product = "Cacao"),
@@ -151,7 +161,7 @@ colnames(dataset)
 
 # Mission 2
 
-# Graphique1
+# Graphique 1 : Boxplots annuels des cotations journalières fermées par produit
 
 # Ajout d'une colonne pour l'année à partir de la date
 dataset <- dataset %>%
@@ -176,7 +186,7 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     y = "Closed Cotation",
     fill = "Produit"
   ) +
-  theme_bw()+
+  theme_bw() +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
@@ -184,24 +194,19 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     legend.position = "none"  # Supprime la légende
   )
 
+# Graphique 2 : Évolution moyenne mensuelle des cotations de clôture par matière première
 
-# Graphique2
-
-# creation du data mensuelle
+# Création du dataset mensuel
 données_mensuelles <- dataset %>%
-  mutate(
-    Mois = floor_date(Date, "month")
-  ) %>%
+  mutate(Mois = floor_date(Date, "month")) %>%
   group_by(Product, Mois) %>%
-  summarise(
-    Moyenne_Cotation = mean(Closed_Cotation, na.rm = TRUE)
-  )
+  summarise(Moyenne_Cotation = mean(Closed_Cotation, na.rm = TRUE))
 
-# Création du graphique
+# Création du graphique de l'évolution moyenne mensuelle
 ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
-  geom_line(alpha = 0.9, color="#9ACD32",size = 1) +  # Ligne verte pour les données
-  geom_smooth(method = "loess", se = FALSE, color='black') +  # Courbe de régression noire sans intervalle de confiance
-  facet_wrap(~Product, scales = "free_y") +  # Un graphique par produit
+  geom_line(alpha = 0.9, color = "#9ACD32", size = 1) +  # Ligne verte pour les données
+  geom_smooth(method = "loess", se = FALSE, color = 'black') +  # Courbe de régression noire sans intervalle de confiance
+  facet_wrap(~ Product, scales = "free_y") +  # Un graphique par produit
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5),  # Centre le titre
@@ -215,14 +220,3 @@ ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
     x = "Date",
     y = "Cotation moyenne mensuelle"
   )
-
-
-
-
-
-
-
-
-
-
-
