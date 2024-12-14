@@ -1,6 +1,6 @@
 #' ---
 #' titre: "Analyse des séries temporelles"
-#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesueur" 
+#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesieur" 
 #' date: "28/11/2024"
 #' ---
 
@@ -17,6 +17,9 @@ library(tabulapdf)
 library(tidyverse)
 library(dplyr)
 library(data.table)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
 
 # Extraction des données des fichiers PDF
 café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
@@ -142,3 +145,84 @@ dataset <- bind_rows(
 
 # Affichage des premières lignes pour vérification
 head(dataset)
+colnames(dataset)
+
+#########################################################################################################
+
+# Mission 2
+
+# Graphique1
+
+# Ajout d'une colonne pour l'année à partir de la date
+dataset <- dataset %>%
+  mutate(Year = as.integer(format(Date, "%Y")))
+
+# Création des titres personnalisés pour les facettes
+product_labels <- c(
+  "Café" = "Cotation du Café",
+  "Cacao" = "Cotation du Cacao",
+  "Jus d'Orange" = "Cotation du Jus d'Orange",
+  "Sucre" = "Cotation du Sucre",
+  "Pétrole" = "Cotation du Pétrole"
+)
+
+# Création des boxplots avec ggplot2
+ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
+  geom_boxplot(outlier.color = "black", outlier.size = 1) +
+  facet_wrap(~ Product, scales = "free_y", labeller = labeller(Product = product_labels)) +
+  labs(
+    title = "Boxplots annuels des cotations journalières fermées par produit",
+    x = "Année",
+    y = "Closed Cotation",
+    fill = "Produit"
+  ) +
+  theme_bw()+
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(face = "bold", size = 10),  # Mise en forme des titres des facettes
+    legend.position = "none"  # Supprime la légende
+  )
+
+
+# Graphique2
+
+# creation du data mensuelle
+données_mensuelles <- dataset %>%
+  mutate(
+    Mois = floor_date(Date, "month")
+  ) %>%
+  group_by(Product, Mois) %>%
+  summarise(
+    Moyenne_Cotation = mean(Closed_Cotation, na.rm = TRUE)
+  )
+
+# Création du graphique
+ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
+  geom_line(alpha = 0.9, color="#9ACD32",size = 1) +  # Ligne verte pour les données
+  geom_smooth(method = "loess", se = FALSE, color='black') +  # Courbe de régression noire sans intervalle de confiance
+  facet_wrap(~Product, scales = "free_y") +  # Un graphique par produit
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),  # Centre le titre
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.spacing = unit(1, "lines"),
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_line(color = "grey90")
+  ) +
+  labs(
+    title = "Évolution moyenne mensuelle des cotations de clôture par matière première",
+    x = "Date",
+    y = "Cotation moyenne mensuelle"
+  )
+
+
+
+
+
+
+
+
+
+
+
