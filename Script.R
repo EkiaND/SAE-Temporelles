@@ -51,97 +51,94 @@ petrol_data <- extract_tables(file = "Futures pétrole Brent - Données Historiq
                               output = "tibble")
 
 
-# Combine les tables extraites pour chaque produit
-# Les données sont initialement sous forme de liste de tables.
-# On utilise `rbindlist` pour fusionner toutes les tables d'un même produit en une seule table.
+# Combinaison et traitement des tables pour chaque produit
 
-data_cafe <- as.tibble(rbindlist(café_data))
-data_cacao <- as.tibble(rbindlist(cacao_data))
-data_jus_orange <- as.tibble(rbindlist(jus_orange_data))
-data_sucre <- as.tibble(rbindlist(sucre_data))
-data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE))
-
-
-# Traitement des tables : renommage des colonnes et conversion des types
-# Pour chaque table, les colonnes sont renommées pour refléter les données qu'elles contiennent.
-# Les colonnes numériques (cotations) sont converties en type `numeric` et les dates en type `Date`.
-
-data_cafe <- data_cafe %>%
+# Pour le café
+data_cafe <- as_tibble(rbindlist(café_data, fill = TRUE)) %>%
   rename(Date = X1, 
-         `Closed_Cotation` = X2, 
-         `Opened_Cotation` = X3, 
-         `Highest_Cotation` = X4, 
-         `Lowest_Cotation` = X5) %>%
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    `Closed_Cotation` = as.numeric(`Closed_Cotation`),
-    `Opened_Cotation` = as.numeric(`Opened_Cotation`),
-    `Highest_Cotation` = as.numeric(`Highest_Cotation`),
-    `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
+    Closed_Cotation = as.numeric(Closed_Cotation),
+    Opened_Cotation = as.numeric(Opened_Cotation),
+    Highest_Cotation = as.numeric(Highest_Cotation),
+    Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
-# Même traitement appliqué à chaque table
-
-data_cacao <- data_cacao %>%
+# Pour le cacao
+data_cacao <- as_tibble(rbindlist(cacao_data, fill = TRUE)) %>%
   rename(Date = X1, 
-         `Closed_Cotation` = X2, 
-         `Opened_Cotation` = X3, 
-         `Highest_Cotation` = X4, 
-         `Lowest_Cotation` = X5) %>%
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    `Closed_Cotation` = as.numeric(`Closed_Cotation`),
-    `Opened_Cotation` = as.numeric(`Opened_Cotation`),
-    `Highest_Cotation` = as.numeric(`Highest_Cotation`),
-    `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
+    Closed_Cotation = as.numeric(Closed_Cotation),
+    Opened_Cotation = as.numeric(Opened_Cotation),
+    Highest_Cotation = as.numeric(Highest_Cotation),
+    Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
-data_jus_orange <- data_jus_orange %>%
+# Pour le jus d'orange
+data_jus_orange <- as_tibble(rbindlist(jus_orange_data, fill = TRUE)) %>%
   rename(Date = X1, 
-         `Closed_Cotation` = X2, 
-         `Opened_Cotation` = X3, 
-         `Highest_Cotation` = X4, 
-         `Lowest_Cotation` = X5) %>%
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    `Closed_Cotation` = as.numeric(`Closed_Cotation`),
-    `Opened_Cotation` = as.numeric(`Opened_Cotation`),
-    `Highest_Cotation` = as.numeric(`Highest_Cotation`),
-    `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
+    Closed_Cotation = as.numeric(Closed_Cotation),
+    Opened_Cotation = as.numeric(Opened_Cotation),
+    Highest_Cotation = as.numeric(Highest_Cotation),
+    Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
-data_sucre <- data_sucre %>%
+# Pour le sucre
+data_sucre <- as_tibble(rbindlist(sucre_data, fill = TRUE)) %>%
   rename(Date = X1, 
-         `Closed_Cotation` = X2, 
-         `Opened_Cotation` = X3, 
-         `Highest_Cotation` = X4, 
-         `Lowest_Cotation` = X5) %>%
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    `Closed_Cotation` = as.numeric(`Closed_Cotation`),
-    `Opened_Cotation` = as.numeric(`Opened_Cotation`),
-    `Highest_Cotation` = as.numeric(`Highest_Cotation`),
-    `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
-  )
-
-data_petrol <- data_petrol %>%
-  rename(Date = X1, 
-         `Closed_Cotation` = X2, 
-         `Opened_Cotation` = X3, 
-         `Highest_Cotation` = X4, 
-         `Lowest_Cotation` = X5) %>%
-  mutate(
-    Date = as.Date(Date, format = "%d/%m/%Y"),
-    `Closed_Cotation` = as.numeric(`Closed_Cotation`),
-    `Opened_Cotation` = as.numeric(`Opened_Cotation`),
-    `Highest_Cotation` = as.numeric(`Highest_Cotation`),
-    `Lowest_Cotation` = as.numeric(`Lowest_Cotation`)
+    Closed_Cotation = as.numeric(Closed_Cotation),
+    Opened_Cotation = as.numeric(Opened_Cotation),
+    Highest_Cotation = as.numeric(Highest_Cotation),
+    Lowest_Cotation = as.numeric(Lowest_Cotation)
   )
 
 
-# Fusionner toutes les données en un seul dataset
-# Cette opération crée une table unique contenant les données de tous les produits.
-dataset <- bind_rows(data_cacao, data_cafe, data_jus_orange, data_sucre, data_petrol)
+# Pour le petrol
+data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE)) %>%
+  rename(Date = X1, 
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = as.numeric(Closed_Cotation),
+    Opened_Cotation = as.numeric(Opened_Cotation),
+    Highest_Cotation = as.numeric(Highest_Cotation),
+    Lowest_Cotation = as.numeric(Lowest_Cotation)
+  )
 
-# Affichage des premières lignes du dataset fusionné pour vérification
+
+
+# Ensuite on fusion de toutes les données en un seul dataset
+dataset <- bind_rows(
+  data_cafe %>% mutate(Product = "Café"),
+  data_cacao %>% mutate(Product = "Cacao"),
+  data_jus_orange %>% mutate(Product = "Jus d'Orange"),
+  data_sucre %>% mutate(Product = "Sucre"),
+  data_petrol %>% mutate(Product = "Pétrole")
+)
+
+# Affichage des premières lignes pour vérification
 head(dataset)
