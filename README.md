@@ -71,11 +71,6 @@ Pour le Brent, plusieurs analyses spécifiques sont réalisées :
    ```bash
    git clone https://github.com/EkiaND/SAE-Temporelles.git
    ```
-2. Installer les dépendances R :
-   ```R
-   install.packages(c("tabulapdf", "ggplot2", "dplyr", "tidyr"))
-   ```
-
 
 ## Auteur
 - **Rasmata Sawadogo**
