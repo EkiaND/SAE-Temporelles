@@ -180,7 +180,7 @@ colnames(dataset)
 
 # Mission 2
 
-# Graphique 1 : Boxplots annuels des cotations journalières fermées par produit
+### --- Graphique 1 --- ###  Boxplots annuels des cotations journalières fermées par produit
 
 # Ajout d'une colonne pour l'année à partir de la date et suppression des NA
 dataset <- dataset %>%
@@ -224,7 +224,7 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
   )
 
 
-# Graphique 2 : Évolution moyenne mensuelle des cotations de clôture par matière première
+### --- Graphique 2 --- ###   Évolution moyenne mensuelle des cotations de clôture par matière première
 
 # Création du dataset mensuel
 données_mensuelles <- dataset %>%
@@ -252,3 +252,71 @@ ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
   )
 
 
+
+### --- Graphique 3 --- ###  
+# Évolution de la moyenne mensuelle de la cotation journalière selon la matière première 
+
+
+données_mensuelles <- données_mensuelles %>%
+  group_by(Product) %>%
+  arrange(Mois) %>%
+  mutate(
+    Taux_Evolution = (Moyenne_Cotation - lag(Moyenne_Cotation)) / lag(Moyenne_Cotation) * 100) %>%
+  ungroup()
+
+head(données_mensuelles)
+
+# Création du graphique
+ggplot(données_mensuelles, aes(x = Mois, y = Taux_Evolution, color = Product)) +
+  geom_line(alpha = 0.9, color="deepskyblue1",size = 0.5) +  # Ligne pour visualiser les variations
+  geom_smooth(method = "loess", se = TRUE, color='black',span=0.7,method.args=list(degree=1)) +  # Ligne pour indiquer 0%
+  facet_wrap(~ Product, scales = "free_y") +  # Une facette par produit
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Taux d'évolution mensuel des cotations fermées par matière première",
+       subtitle = "Analyse basée sur les moyennes mensuelles",
+       x = "Mois", y = "Taux d'évolution (%)")
+
+
+### --- Graphique 4 --- ###
+# Association existant entre le café et le cacao
+
+cafe_cacao_data <- données_mensuelles %>%
+  filter(Product %in% c("Café", "Cacao")) %>%
+  select(Mois, Product, Moyenne_Cotation) %>%
+  pivot_wider(names_from = Product, values_from = Moyenne_Cotation, names_prefix = "Moyenne_")
+
+head(cafe_cacao_data)
+
+# Création du graphique
+ggplot(cafe_cacao_data, aes(x = Moyenne_Café, y = Moyenne_Cacao)) +
+  geom_point(color = "blue", size = 1, alpha = 0.7) +
+  geom_smooth(method = "loess", color = "black", se = TRUE, fill = "grey70", alpha = 0.3) +  # Courbe LOESS
+  labs(title = "Association entre les moyennes mensuelles des cotations de café et de cacao",
+       x = "Moyenne mensuelle des cotations (Café)",y = "Moyenne mensuelle des cotations (Cacao)") +
+  theme_minimal()
+
+
+
+
+### --- Graphique 5 --- ###
+
+
+brent_data <- données_mensuelles %>%
+  filter(Product == "Pétrole") %>%
+  select(Mois, Moyenne_Cotation)
+
+head(brent_data)
+
+# Création du graphique
+ggplot(brent_data, aes(x = Mois, y = Moyenne_Cotation)) +
+  geom_line(color = "darkkhaki", size = 0.7) +  # Ligne représentant la cotation
+  geom_smooth(method = "loess", color = "red", se = FALSE, fill = "grey70", alpha = 0.3) +  # Courbe lissée LOESS avec intervalle
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Évolution de la cotation moyenne mensuelle du Brent",
+       subtitle = "Analyse depuis janvier 2010",
+       x = "Date", y = "Cotation moyenne mensuelle")
