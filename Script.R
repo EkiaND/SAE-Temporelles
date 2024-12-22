@@ -68,33 +68,39 @@ petrol_data <- extract_text("Futures pétrole Brent - Données Historiques.pdf")
 
 # Pour le café
 data_cafe <- as_tibble(rbindlist(café_data, fill = TRUE)) %>%
-  rename(Date = X1, 
-         Closed_Cotation = X2, 
-         Opened_Cotation = X3, 
-         Highest_Cotation = X4, 
-         Lowest_Cotation = X5) %>%
+  rename(
+    Date = X1, 
+    Closed_Cotation = X2, 
+    Opened_Cotation = X3, 
+    Highest_Cotation = X4, 
+    Lowest_Cotation = X5
+  ) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = as.numeric(Closed_Cotation),
-    Opened_Cotation = as.numeric(Opened_Cotation),
-    Highest_Cotation = as.numeric(Highest_Cotation),
-    Lowest_Cotation = as.numeric(Lowest_Cotation)
+    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2)
   )
 
 # Pour le cacao
 data_cacao <- as_tibble(rbindlist(cacao_data, fill = TRUE)) %>%
-  rename(Date = X1, 
-         Closed_Cotation = X2, 
-         Opened_Cotation = X3, 
-         Highest_Cotation = X4, 
-         Lowest_Cotation = X5) %>%
+  rename(
+    Date = X1, 
+    Closed_Cotation = X2, 
+    Opened_Cotation = X3, 
+    Highest_Cotation = X4, 
+    Lowest_Cotation = X5
+  ) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = as.numeric(Closed_Cotation),
-    Opened_Cotation = as.numeric(Opened_Cotation),
-    Highest_Cotation = as.numeric(Highest_Cotation),
-    Lowest_Cotation = as.numeric(Lowest_Cotation)
-  )
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
+  )%>%
+  drop_na()
+
 
 # Pour le jus d'orange
 data_jus_orange <- as_tibble(rbindlist(jus_orange_data, fill = TRUE)) %>%
@@ -105,10 +111,10 @@ data_jus_orange <- as_tibble(rbindlist(jus_orange_data, fill = TRUE)) %>%
          Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = as.numeric(Closed_Cotation),
-    Opened_Cotation = as.numeric(Opened_Cotation),
-    Highest_Cotation = as.numeric(Highest_Cotation),
-    Lowest_Cotation = as.numeric(Lowest_Cotation)
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
   )
 
 # Pour le sucre
@@ -120,10 +126,10 @@ data_sucre <- as_tibble(rbindlist(sucre_data, fill = TRUE)) %>%
          Lowest_Cotation = X5) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = as.numeric(Closed_Cotation),
-    Opened_Cotation = as.numeric(Opened_Cotation),
-    Highest_Cotation = as.numeric(Highest_Cotation),
-    Lowest_Cotation = as.numeric(Lowest_Cotation)
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
   )
 
 # Pour le pétrole
