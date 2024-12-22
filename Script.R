@@ -61,11 +61,8 @@ sucre_data <- extract_tables("Futures sucre Londres - Données Historiques.pdf",
                              col_names = FALSE,
                              output = "tibble")
 
-petrol_data <- extract_tables(file = "Futures pétrole Brent - Données Historiques.pdf",
-                              method = "decide", 
-                              encoding = "UTF-8",
-                              col_names = FALSE,
-                              output = "tibble")
+petrol_data <- extract_text("Futures pétrole Brent - Données Historiques.pdf")
+
 
 # Combinaison et traitement des tables pour chaque produit
 
@@ -130,19 +127,35 @@ data_sucre <- as_tibble(rbindlist(sucre_data, fill = TRUE)) %>%
   )
 
 # Pour le pétrole
-data_petrol <- as_tibble(rbindlist(petrol_data, fill = TRUE)) %>%
-  rename(Date = X1, 
-         Closed_Cotation = X2, 
-         Opened_Cotation = X3, 
-         Highest_Cotation = X4, 
-         Lowest_Cotation = X5) %>%
+
+# Diviser les données en lignes
+lines <- unlist(strsplit(petrol_data, "\n"))
+
+# Filtrer les lignes contenant "Page" ou "Futures pétrole Brent" et les ignorer
+lines_cleaned <- lines[!grepl("Page|Futures pétrole Brent", lines)]
+
+# Filtrer les lignes contenant des dates 
+data_lines <- lines[str_detect(lines, "^[0-9]{2}/[0-9]{2}/[0-9]{4}")]
+
+# Séparer les colonnes en utilisant des espaces multiples comme séparateurs
+split_data <- str_split(data_lines, "\\s+", simplify = TRUE)
+
+# Ajouter des noms de colonnes
+colnames(split_data) <- c("Date", "Closed_Cotation", "Opened_Cotation", "Highest_Cotation", "Lowest_Cotation")
+
+# Convertir en tibble
+split_data_tibble <- as_tibble(split_data)
+
+# Transformation des colonnes
+data_petrol <- split_data_tibble %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = as.numeric(Closed_Cotation),
-    Opened_Cotation = as.numeric(Opened_Cotation),
-    Highest_Cotation = as.numeric(Highest_Cotation),
-    Lowest_Cotation = as.numeric(Lowest_Cotation)
+    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 3),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", Opened_Cotation)), 3),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", Highest_Cotation)), 3),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", Lowest_Cotation)), 3)
   )
+
 
 # Fusion de toutes les données en un seul dataset
 dataset <- bind_rows(
@@ -163,9 +176,10 @@ colnames(dataset)
 
 # Graphique 1 : Boxplots annuels des cotations journalières fermées par produit
 
-# Ajout d'une colonne pour l'année à partir de la date
+# Ajout d'une colonne pour l'année à partir de la date et suppression des NA
 dataset <- dataset %>%
-  mutate(Year = as.integer(format(Date, "%Y")))
+  mutate(Year = as.integer(format(Date, "%Y"))) %>% 
+  filter(!is.na(Year))
 
 # Création des titres personnalisés pour les facettes
 product_labels <- c(
@@ -176,23 +190,33 @@ product_labels <- c(
   "Pétrole" = "Cotation du Pétrole"
 )
 
-# Création des boxplots avec ggplot2
+# Création des boxplots 
 ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
-  geom_boxplot(outlier.color = "black", outlier.size = 1) +
-  facet_wrap(~ Product, scales = "free_y", labeller = labeller(Product = product_labels)) +
+  geom_boxplot(
+    color = "black",           
+    outlier.color = "black",   
+    outlier.size = 1          
+  ) +
+  facet_wrap(
+    ~ Product, 
+    scales = "free_y", 
+    labeller = labeller(Product = product_labels)
+  ) +
   labs(
     title = "Boxplots annuels des cotations journalières fermées par produit",
     x = "Année",
     y = "Closed Cotation",
-    fill = "Produit"
+    fill = "Produit"           
   ) +
-  theme_bw() +
-  theme_minimal() +
+  theme_bw() +  # Fond clair avec bordures
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(face = "bold", size = 10),  # Mise en forme des titres des facettes
-    legend.position = "none"  # Supprime la légende
+    axis.text.x = element_text(angle = 45, hjust = 1),     
+    strip.text = element_text(face = "bold", size = 10),  
+    panel.grid.major.y = element_line(color = "gray90"),  
+    legend.position = "none",                             
+    plot.title = element_text(face = "bold", hjust = 0.5) 
   )
+
 
 # Graphique 2 : Évolution moyenne mensuelle des cotations de clôture par matière première
 
@@ -205,7 +229,7 @@ données_mensuelles <- dataset %>%
 # Création du graphique de l'évolution moyenne mensuelle
 ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
   geom_line(alpha = 0.9, color = "#9ACD32", size = 1) +  # Ligne verte pour les données
-  geom_smooth(method = "loess", se = FALSE, color = 'black') +  # Courbe de régression noire sans intervalle de confiance
+  geom_smooth(method = "loess", span = 0.5,se = FALSE, color = 'black') +  # Courbe de régression noire sans intervalle de confiance
   facet_wrap(~ Product, scales = "free_y") +  # Un graphique par produit
   theme_minimal() +
   theme(
@@ -220,3 +244,5 @@ ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
     x = "Date",
     y = "Cotation moyenne mensuelle"
   )
+
+
