@@ -171,9 +171,12 @@ dataset <- bind_rows(
   data_sucre %>% mutate(Product = "Sucre"),
   data_petrol %>% mutate(Product = "Pétrole")
 )
+dataset <- dataset %>% mutate(Product = as.factor(Product))
+
 
 # Affichage des premières lignes pour vérification
 head(dataset)
+str(dataset)
 colnames(dataset)
 
 #########################################################################################################
@@ -234,9 +237,9 @@ données_mensuelles <- dataset %>%
 
 # Création du graphique de l'évolution moyenne mensuelle
 ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
-  geom_line(alpha = 0.9, color = "#9ACD32", size = 1) +  # Ligne verte pour les données
-  geom_smooth(method = "loess", span = 0.5,se = FALSE, color = 'black') +  # Courbe de régression noire sans intervalle de confiance
-  facet_wrap(~ Product, scales = "free_y") +  # Un graphique par produit
+  geom_line(alpha = 0.9, color = "#8BB92D", size = 1) +  
+  geom_smooth(method = "loess", span = 0.3,se = FALSE, color = 'black') +  
+  facet_wrap(~ Product, scales = "free_y") +  
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5),  # Centre le titre
@@ -280,43 +283,253 @@ ggplot(données_mensuelles, aes(x = Mois, y = Taux_Evolution, color = Product)) 
        x = "Mois", y = "Taux d'évolution (%)")
 
 
-### --- Graphique 4 --- ###
+###########################################################################
+
 # Association existant entre le café et le cacao
 
-cafe_cacao_data <- données_mensuelles %>%
-  filter(Product %in% c("Café", "Cacao")) %>%
-  select(Mois, Product, Moyenne_Cotation) %>%
-  pivot_wider(names_from = Product, values_from = Moyenne_Cotation, names_prefix = "Moyenne_")
+###########################################################################
 
-head(cafe_cacao_data)
+# Étape 1 : Préparation des données
+moyennes_cafe <- dataset %>%
+  filter(Product == "Café") %>%
+  mutate(Mois = floor_date(Date, "month")) %>%
+  group_by(Mois) %>%
+  summarise(Moyenne_Cafe = mean(Closed_Cotation, na.rm = TRUE))
 
-# Création du graphique
-ggplot(cafe_cacao_data, aes(x = Moyenne_Café, y = Moyenne_Cacao)) +
-  geom_point(color = "blue", size = 1, alpha = 0.7) +
-  geom_smooth(method = "loess", color = "black", se = TRUE, fill = "grey70", alpha = 0.3) +  # Courbe LOESS
-  labs(title = "Association entre les moyennes mensuelles des cotations de café et de cacao",
-       x = "Moyenne mensuelle des cotations (Café)",y = "Moyenne mensuelle des cotations (Cacao)") +
+moyennes_cacao <- dataset %>%
+  filter(Product == "Cacao") %>%
+  mutate(Mois = floor_date(Date, "month")) %>%
+  group_by(Mois) %>%
+  summarise(Moyenne_Cacao = mean(Closed_Cotation, na.rm = TRUE))
+
+# Fusion des données
+association_data <- inner_join(moyennes_cafe, moyennes_cacao, by = "Mois")
+
+# Étape 2 : Détection des données atypiques
+boxplot(association_data$Moyenne_Cafe, main = "Boxplot Café", ylab = "Moyenne Cotation Café")
+boxplot(association_data$Moyenne_Cacao, main = "Boxplot Cacao", ylab = "Moyenne Cotation Cacao")
+
+# Étape 3 : Diagramme de dispersion et corrélation
+ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
+  geom_point(color = "#FF6347") +  # Points en rouge
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +  # Régression linéaire
+  geom_smooth(method = "loess", se = FALSE, color = "darkgreen", linetype = "dashed") +  # Régression lissée
+  labs(
+    title = "Association entre les cotations moyennes du café et du cacao",
+    x = "Moyenne mensuelle du Café",
+    y = "Moyenne mensuelle du Cacao"
+  ) +
+  theme_minimal()
+
+# Corrélation
+correlation <- cor(association_data$Moyenne_Cafe, association_data$Moyenne_Cacao, use = "complete.obs")
+cat("Coefficient de corrélation :", correlation, "\n")
+
+# Étape 4 : Modèle de régression linéaire simple
+modele <- lm(Moyenne_Cacao ~ Moyenne_Cafe, data = association_data)
+summary(modele)
+
+# Coefficient de détermination
+R2 <- summary(modele)$r.squared
+cat("Coefficient de détermination (R^2) :", R2, "\n")
+
+# Équation des moindres carrés
+cat("Équation de la droite de régression :\n")
+cat("Moyenne_Cacao =", coef(modele)[1], "+", coef(modele)[2], "* Moyenne_Cafe\n")
+
+# Résidus du modèle
+plot(modele$residuals, main = "Résidus du modèle", ylab = "Résidus", xlab = "Index")
+
+# Prévisions (facultatif)
+predict(modele, newdata = data.frame(Moyenne_Cafe = c(180, 200)), interval = "confidence")
+
+
+###########################################################################
+
+# ANALYSE DU BRENT 
+
+###########################################################################
+
+#1.
+
+# Filtrer pour le Brent et calculer les moyennes mensuelles
+brent_data <- dataset %>%
+  filter(Product == "Pétrole") %>%
+  mutate(Mois = floor_date(Date, "month")) %>%
+  group_by(Mois) %>%
+  summarise(Moyenne_Brent = mean(Closed_Cotation, na.rm = TRUE))
+
+
+# Visualisation globale
+ggplot(brent_data, aes(x = Mois, y = Moyenne_Brent)) +
+  geom_line(color = "#8B4513", size = 0.8) +  
+  geom_smooth(method = "loess", span = 0.3, se = FALSE, color = "#FF0000", size = 1) +  # Rouge et lissage ajusté
+  labs(
+    title = "Évolution de la cotation mensuelle du Brent",
+    x = "Date",
+    y = "Moyenne mensuelle (USD)"
+  ) +
   theme_minimal()
 
 
+#2. diagramme des saisonnalités
+
+# Ajouter des colonnes pour l'année et le mois
+brent_data <- brent_data %>%
+  mutate(
+    Annee = year(Mois),
+    Mois_simple = factor(month(Mois), levels = 1:12, labels = month.abb)
+  )
+
+# Calcul des moyennes mensuelles par année
+saisonnalite_annee <- brent_data %>%
+  group_by(Annee, Mois_simple) %>%
+  summarise(Moyenne_Brent = mean(Moyenne_Brent, na.rm = TRUE)) %>%
+  ungroup()
 
 
-### --- Graphique 5 --- ###
-
-
-brent_data <- données_mensuelles %>%
-  filter(Product == "Pétrole") %>%
-  select(Mois, Moyenne_Cotation)
-
-head(brent_data)
-
-# Création du graphique
-ggplot(brent_data, aes(x = Mois, y = Moyenne_Cotation)) +
-  geom_line(color = "darkkhaki", size = 0.7) +  # Ligne représentant la cotation
-  geom_smooth(method = "loess", color = "red", se = FALSE, fill = "grey70", alpha = 0.3) +  # Courbe lissée LOESS avec intervalle
+# Graphique des saisonnalités avec courbes par année
+ggplot(saisonnalite_annee, aes(x = Mois_simple, y = Moyenne_Brent, color = factor(Annee), group = Annee)) +
+  geom_line(size = 1) +  
+  labs(
+    title = "Saisonnalité des moyennes mensuelles de la cotation du Brent",
+    x = "Mois de l'année",
+    y = "Moyenne mensuelle (USD)",
+    color = "Année"
+  ) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-        axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Évolution de la cotation moyenne mensuelle du Brent",
-       subtitle = "Analyse depuis janvier 2010",
-       x = "Date", y = "Cotation moyenne mensuelle")
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major = element_line(color = "grey90")
+  )
+
+
+#3.
+
+# Filtrer pour les données depuis 2020
+brent_2020 <- brent_data %>%
+  filter(Mois >= as.Date("2020-01-01"))
+
+# Visualisation avec régression lissée de 2020 à la fin
+ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
+  geom_line(color = "blue", size = 0.8) +
+  geom_smooth(method = "loess", span = 0.3, se = FALSE, color = "red", size = 0.8) +
+  scale_x_date(
+    breaks = seq(from = as.Date("2020-06-01"), 
+                 to = max(brent_2020$Mois), 
+                 by = "6 months"),
+    date_labels = "%B %Y",
+    name = "Mois de l'année"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 0),
+    panel.grid.major = element_line(color = "#E5E5E5"),
+    axis.title.y = element_blank()
+  )
+
+
+#4.
+
+# Définir t1 et t2 en termes de Year_Month
+t1 <- 2022 + 6 / 12  # Juin 2022
+t2 <- 2023 + 6 / 12  # Juin 2023
+brent_2020 <- brent_2020 %>%
+  mutate(
+    Year_Month = as.numeric(format(Mois, "%Y")) + as.numeric(format(Mois, "%m")) / 12,
+    Var_t1 = pmax(0, Year_Month - t1),  # Variable pour le point de coupure t1
+    Var_t2 = pmax(0, Year_Month - t2)   # Variable pour le point de coupure t2
+  )
+# Ajuster le modèle
+model <- lm(Moyenne_Brent ~ Year_Month + Var_t1 + Var_t2, data = brent_2020)
+
+# Afficher le résumé du modèle
+summary(model)
+
+# Ajouter les prédictions pour chaque segment dans les données
+brent_2020 <- brent_2020 %>%
+  mutate(
+    Predicted_Brent = predict(model)  # Basé sur le modèle ajusté avec Var_t1 et Var_t2
+  )
+
+
+# Graphique avec les segments de régression
+ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
+  # Courbe des valeurs réelles
+  geom_line(color = "steelblue", size = 1) +
+  # Lissage (courbe verte)
+  geom_smooth(method = "loess", color = "red", size = 1, se = FALSE) +
+  # Ligne rouge pour la régression prédite
+  geom_line(aes(y = Predicted_Brent), color ="green4", size = 1) +
+  # Ajout de lignes verticales pour marquer Var_t1 et Var_t2
+  geom_vline(xintercept = as.Date(c("2022-06-01", "2023-06-01")), linetype = "dashed", color = "black", size = 1) +
+  # Ajout de labels et d'annotations
+  labs(
+    title = "Régression par morceaux avec ruptures en Juin 2022 et Juin 2023",
+    x = "Date",
+    y = "Moyenne mensuelle du Brent (USD)"
+  ) +
+  scale_x_date(
+    breaks = seq(from = as.Date("2020-06-01"), 
+                 to = max(brent_2020$Mois), 
+                 by = "6 months"),
+    date_labels = "%B %Y",
+    name = "Mois de l'année"
+  ) +
+  
+  theme_minimal()
+
+#5.
+# 1. Créer les dates pour les 26 prochains mois
+future_dates <- seq(from = max(brent_2020$Mois) + months(1), 
+                    by = "month", length.out = 26)
+colnames(brent_2020)
+# 2. Créer un nouveau dataframe avec ces dates futures
+future_data <- data.frame(Mois = future_dates)
+future_data$Year_Month <- as.numeric(format(future_data$Mois, "%Y")) + as.numeric(format(future_data$Mois, "%m")) / 12
+future_data$Var_t1 <- pmax(0, future_data$Year_Month - t1)
+future_data$Var_t2 <- pmax(0, future_data$Year_Month - t2)
+
+# 3. Faire la prédiction pour les 26 prochains mois avec l'intervalle de prédiction
+future_predictions <- predict(model, newdata = future_data, interval = "prediction")
+
+# 4. Ajouter les prévisions et les intervalles dans le dataframe
+future_data$Predicted_Brent <- future_predictions[, "fit"]
+future_data$Lower_Brent <- future_predictions[, "lwr"]
+future_data$Upper_Brent <- future_predictions[, "upr"]
+
+# 5. Visualiser avec la courbe et la bande de confiance
+ggplot() +
+  # Courbe des valeurs réelles (sur brent_2020)
+  geom_line(data = brent_2020, aes(x = Mois, y = Moyenne_Brent), color = "steelblue", size = 1) +
+  
+  # Lissage (courbe rouge) sur les données réelles avec aes() correctement spécifié
+  geom_smooth(data = brent_2020, aes(x = Mois, y = Moyenne_Brent), method = "loess", color = "red", size = 1, se = FALSE) +
+  
+  # Ligne des prédictions pour les mois futurs (sur future_data)
+  geom_line(data = future_data, aes(x = Mois, y = Predicted_Brent), color = "darkgreen", size = 1) +
+  
+  # Bande de confiance pour les prédictions futures (en utilisant Lower_Brent et Upper_Brent)
+  geom_ribbon(data = future_data, aes(x = Mois, ymin = Lower_Brent, ymax = Upper_Brent), fill = "chocolate3", alpha = 0.2) +
+  # Ajouter des pointillés noirs au-dessus des bandes de confiance
+  geom_line(data = future_data, aes(x = Mois, y = Upper_Brent), color = "black", linetype = "dashed", size = 0.3) +
+  geom_line(data = future_data, aes(x = Mois, y = Lower_Brent), color = "black", linetype = "dashed", size = 0.3) +
+  
+  # Ajout de labels et d'annotations
+  labs(
+    title = "Régression par morceaux avec prévisions et bande de confiance pour les 26 prochains mois",
+    x = "Date",
+    y = "Moyenne mensuelle du Brent (USD)"
+  ) +
+  
+  # Définir l'échelle des dates avec une fréquence annuelle en janvier
+  scale_x_date(
+    breaks = seq(from = as.Date("2020-01-01"), to = max(future_data$Mois), by = "1 year"),
+    date_labels = "%B %Y",  # Afficher le mois et l'année sous forme de "Janvier 2020"
+    name = "Mois de l'année"
+  ) +
+  
+  theme_minimal()
+
