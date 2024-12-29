@@ -41,6 +41,7 @@ café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
                             method = "decide", 
                             encoding = "UTF-8",
                             col_names = FALSE,
+                            dec = ",",
                             output = "tibble")
 
 cacao_data <- extract_tables("Futures cacao US - Données Historiques.pdf",
@@ -77,10 +78,10 @@ data_cafe <- as_tibble(rbindlist(café_data, fill = TRUE)) %>%
   ) %>%
   mutate(
     Date = as.Date(Date, format = "%d/%m/%Y"),
-    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
-    Opened_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
-    Highest_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2),
-    Lowest_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 2)
+    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation))/100, 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", Opened_Cotation))/100, 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", Highest_Cotation))/100, 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", Lowest_Cotation))/100, 2)
   )
 
 # Pour le cacao
@@ -183,7 +184,11 @@ colnames(dataset)
 
 # Mission 2
 
-### --- Graphique 1 --- ###  Boxplots annuels des cotations journalières fermées par produit
+#########################################################################################################
+
+# Boxplots annuels des cotations journalières fermées par produit
+
+#########################################################################################################
 
 # Ajout d'une colonne pour l'année à partir de la date et suppression des NA
 dataset <- dataset %>%
@@ -217,7 +222,7 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     y = "Closed Cotation",
     fill = "Produit"           
   ) +
-  theme_bw() +  # Fond clair avec bordures
+  theme_bw() +  
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),     
     strip.text = element_text(face = "bold", size = 10),  
@@ -226,8 +231,11 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     plot.title = element_text(face = "bold", hjust = 0.5) 
   )
 
+#########################################################################################################
 
-### --- Graphique 2 --- ###   Évolution moyenne mensuelle des cotations de clôture par matière première
+#   Évolution moyenne mensuelle des cotations de clôture par matière première
+
+#########################################################################################################
 
 # Création du dataset mensuel
 données_mensuelles <- dataset %>%
@@ -239,8 +247,9 @@ données_mensuelles <- dataset %>%
 ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
   geom_line(alpha = 0.9, color = "#8BB92D", size = 1) +  
   geom_smooth(method = "loess", span = 0.3,se = FALSE, color = 'black') +  
-  facet_wrap(~ Product, scales = "free_y") +  
-  theme_minimal() +
+  facet_wrap(~ Product, scales = "free_y",labeller = labeller(Product = product_labels)
+) +  
+  theme_bw() +  
   theme(
     plot.title = element_text(hjust = 0.5),  # Centre le titre
     axis.text.x = element_text(angle = 45, hjust = 1),
@@ -256,9 +265,11 @@ ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
 
 
 
-### --- Graphique 3 --- ###  
+#########################################################################################################
+
 # Évolution de la moyenne mensuelle de la cotation journalière selon la matière première 
 
+#########################################################################################################
 
 données_mensuelles <- données_mensuelles %>%
   group_by(Product) %>%
@@ -269,15 +280,27 @@ données_mensuelles <- données_mensuelles %>%
 
 head(données_mensuelles)
 
+
+# Création des titres personnalisés pour les facettes
+product_labels2 <- c(
+  "Café" = "Variation du café",
+  "Cacao" = "Variation du cacao",
+  "Jus d'Orange" = "Variation du jus d'orange",
+  "Sucre" = "Variation du sucre",
+  "Pétrole" = "Variation du pétrole"
+)
+
 # Création du graphique
 ggplot(données_mensuelles, aes(x = Mois, y = Taux_Evolution, color = Product)) +
   geom_line(alpha = 0.9, color="deepskyblue1",size = 0.5) +  # Ligne pour visualiser les variations
   geom_smooth(method = "loess", se = TRUE, color='black',span=0.7,method.args=list(degree=1)) +  # Ligne pour indiquer 0%
-  facet_wrap(~ Product, scales = "free_y") +  # Une facette par produit
+  facet_wrap(~ Product, scales = "free_y",labeller = labeller(Product = product_labels2)
+) +  # Une facette par produit
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
         axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
+  theme_bw() +  
   labs(title = "Taux d'évolution mensuel des cotations fermées par matière première",
        subtitle = "Analyse basée sur les moyennes mensuelles",
        x = "Mois", y = "Taux d'évolution (%)")
@@ -289,7 +312,7 @@ ggplot(données_mensuelles, aes(x = Mois, y = Taux_Evolution, color = Product)) 
 
 ###########################################################################
 
-# Étape 1 : Préparation des données
+# Préparation des données
 moyennes_cafe <- dataset %>%
   filter(Product == "Café") %>%
   mutate(Mois = floor_date(Date, "month")) %>%
@@ -305,44 +328,87 @@ moyennes_cacao <- dataset %>%
 # Fusion des données
 association_data <- inner_join(moyennes_cafe, moyennes_cacao, by = "Mois")
 
-# Étape 2 : Détection des données atypiques
-boxplot(association_data$Moyenne_Cafe, main = "Boxplot Café", ylab = "Moyenne Cotation Café")
-boxplot(association_data$Moyenne_Cacao, main = "Boxplot Cacao", ylab = "Moyenne Cotation Cacao")
+# Calcul des limites pour le café
+IQR_cafe <- IQR(association_data$Moyenne_Cafe, na.rm = TRUE)
+limites_cafe <- quantile(association_data$Moyenne_Cafe, c(0.25, 0.75), na.rm = TRUE) + c(-1.5, 1.5) * IQR_cafe
 
-# Étape 3 : Diagramme de dispersion et corrélation
+# Calcul des limites pour le cacao
+IQR_cacao <- IQR(association_data$Moyenne_Cacao, na.rm = TRUE)
+limites_cacao <- quantile(association_data$Moyenne_Cacao, c(0.25, 0.75), na.rm = TRUE) + c(-1.5, 1.5) * IQR_cacao
+
+# Filtrer les valeurs atypiques
+outliers <- association_data %>%
+  filter(
+    Moyenne_Cafe < limites_cafe[1] | Moyenne_Cafe > limites_cafe[2] |
+      Moyenne_Cacao < limites_cacao[1] | Moyenne_Cacao > limites_cacao[2]
+  )
+
+
+# Diagramme de dispersion et corrélation
 ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
-  geom_point(color = "#FF6347") +  # Points en rouge
-  geom_smooth(method = "lm", se = TRUE, color = "blue") +  # Régression linéaire
-  geom_smooth(method = "loess", se = FALSE, color = "darkgreen", linetype = "dashed") +  # Régression lissée
+  geom_point(color = "blue", size = 0.5) +  # Points
+  geom_point(data = outliers, aes(x = Moyenne_Cafe, y = Moyenne_Cacao), color = "blue", size = 0.7) + 
+  geom_text(
+    data = outliers, 
+    aes(x = Moyenne_Cafe, y = Moyenne_Cacao, label = format(Mois, "%b %Y")), 
+    color = "black", 
+    size = 3, 
+    hjust = 0, 
+    vjust = -1
+  ) +
+  geom_smooth(method = "loess", se = TRUE, color = "black") + 
   labs(
     title = "Association entre les cotations moyennes du café et du cacao",
     x = "Moyenne mensuelle du Café",
     y = "Moyenne mensuelle du Cacao"
   ) +
+  annotate("text", 
+           x = min(association_data$Moyenne_Cafe), 
+           y = max(association_data$Moyenne_Cacao), 
+           label = equation, 
+           color = "brown1", 
+           hjust = 0, 
+           vjust = 1, 
+           size = 3) + 
   theme_minimal()
+
 
 # Corrélation
 correlation <- cor(association_data$Moyenne_Cafe, association_data$Moyenne_Cacao, use = "complete.obs")
 cat("Coefficient de corrélation :", correlation, "\n")
 
-# Étape 4 : Modèle de régression linéaire simple
+# Extraction des coefficients du modèle
+intercept <- round(coef(modele)[1], 4)  # Ordonnée à l'origine
+slope <- round(coef(modele)[2], 4)      # Pente
+equation <- paste0("Moyenne_Cacao = ", intercept, " + ", slope, " * Moyenne_Cafe")  # Équation complète
+
+# Modèle de régression linéaire simple
 modele <- lm(Moyenne_Cacao ~ Moyenne_Cafe, data = association_data)
 summary(modele)
+
 
 # Coefficient de détermination
 R2 <- summary(modele)$r.squared
 cat("Coefficient de détermination (R^2) :", R2, "\n")
 
-# Équation des moindres carrés
-cat("Équation de la droite de régression :\n")
-cat("Moyenne_Cacao =", coef(modele)[1], "+", coef(modele)[2], "* Moyenne_Cafe\n")
+### Résumé des résultats ### 
+###  Coefficient de corrélation 
+# Le coefficient de corrélation entre les moyennes mensuelles des cotations du café 
+# et du cacao est 0.4005, indiquant une association modérée positive. Cela signifie que
+# les deux variables ont tendance à évoluer dans le même sens, mais la relation n'est pas
+# particulièrement forte.
 
-# Résidus du modèle
-plot(modele$residuals, main = "Résidus du modèle", ylab = "Résidus", xlab = "Index")
+###  Coefficient de détermination 
+# Le coefficient de détermination est 0.1604 (16.04%). Cela signifie que 16% de la variabilité
+# des cotations moyennes du cacao peut être expliquée par les variations des cotations moyennes
+# du café. Les 84% restants sont dus à d'autres facteurs ou à des variations aléatoires.
 
-# Prévisions (facultatif)
-predict(modele, newdata = data.frame(Moyenne_Cafe = c(180, 200)), interval = "confidence")
 
+###  Test d’hypothèse pour la pente
+# La valeur de p associée à la pente est 3.04e-08, ce qui est extrêmement significatif (p < 0.05)
+# Cela rejette l’hypothèse nulle ( selon laquelle il n’y aurait pas de relation linéaire entre 
+# les deux variables. Il existe une relation linéaire significative entre les cotations moyennes
+# du café et du cacao.
 
 ###########################################################################
 
@@ -485,7 +551,7 @@ ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
 # 1. Créer les dates pour les 26 prochains mois
 future_dates <- seq(from = max(brent_2020$Mois) + months(1), 
                     by = "month", length.out = 26)
-colnames(brent_2020)
+
 # 2. Créer un nouveau dataframe avec ces dates futures
 future_data <- data.frame(Mois = future_dates)
 future_data$Year_Month <- as.numeric(format(future_data$Mois, "%Y")) + as.numeric(format(future_data$Mois, "%m")) / 12
