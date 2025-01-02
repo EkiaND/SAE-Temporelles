@@ -1,6 +1,6 @@
 #' ---
 #' titre: "Analyse des séries temporelles"
-#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesieur" 
+#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesueur" 
 #' date: "28/11/2024"
 #' ---
 
