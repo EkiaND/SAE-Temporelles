@@ -222,7 +222,7 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     y = "Closed Cotation",
     fill = "Produit",
     subtitle = "source : Investing.com",
-    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Sidy ,Courteney")
   ) +
   theme_bw() +  
   theme(
@@ -381,7 +381,7 @@ ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
   ) +
   geom_smooth(method = "loess", se = TRUE, color = "black") + 
   labs(
-    title = "Association entre les cotations moyennes du café et du cacao",
+    title = "Étude de l'association entre les cotations de fermeture moyennes du café et du cacao",
     x = "Moyenne mensuelle du Café",
     y = "Moyenne mensuelle du Cacao",
     subtitle = "source : Investing.com",
@@ -452,7 +452,7 @@ ggplot(brent_data, aes(x = Mois, y = Moyenne_Brent)) +
   geom_line(color = "#8B4513", size = 0.8) +  
   geom_smooth(method = "loess", span = 0.3, se = FALSE, color = "#FF0000", size = 1) +  # Rouge et lissage ajusté
   labs(
-    title = "Évolution de la cotation mensuelle du Brent",
+    title = "Évolution mensuelle moyenne de la cotation journalière du Brent",
     x = "Date",
     y = "Moyenne mensuelle (USD)",
     subtitle = "source : Investing.com",
@@ -620,7 +620,7 @@ ggplot() +
   geom_line(data = future_data, aes(x = Mois, y = Upper_Brent), color = "black", linetype = "dashed", size = 0.3) +
   geom_line(data = future_data, aes(x = Mois, y = Lower_Brent), color = "black", linetype = "dashed", size = 0.3) +
   labs(
-    title = "Régression par morceaux avec prévisions et bande de confiance pour les 26 prochains mois",
+    title = "Prévision des moyennes mensuelles de la cotation du Brent avec bande de confiance à 95%",
     x = "Date",
     y = "Moyenne mensuelle du Brent (USD)",
     subtitle = "source : Investing.com",
