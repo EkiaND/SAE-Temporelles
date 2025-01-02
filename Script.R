@@ -220,7 +220,9 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     title = "Boxplots annuels des cotations journalières fermées par produit",
     x = "Année",
     y = "Closed Cotation",
-    fill = "Produit"           
+    fill = "Produit",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
   theme_bw() +  
   theme(
@@ -228,7 +230,9 @@ ggplot(dataset, aes(x = as.factor(Year), y = Closed_Cotation, fill = Product)) +
     strip.text = element_text(face = "bold", size = 10),  
     panel.grid.major.y = element_line(color = "gray90"),  
     legend.position = "none",                             
-    plot.title = element_text(face = "bold", hjust = 0.5) 
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5) 
   )
 
 #########################################################################################################
@@ -251,16 +255,20 @@ ggplot(données_mensuelles, aes(x = Mois, y = Moyenne_Cotation)) +
 ) +  
   theme_bw() +  
   theme(
-    plot.title = element_text(hjust = 0.5),  # Centre le titre
+    plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.spacing = unit(1, "lines"),
     panel.grid.major = element_line(color = "grey90"),
-    panel.grid.minor = element_line(color = "grey90")
+    panel.grid.minor = element_line(color = "grey90"),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5)
   ) +
   labs(
     title = "Évolution moyenne mensuelle des cotations de clôture par matière première",
     x = "Date",
-    y = "Cotation moyenne mensuelle"
+    y = "Cotation moyenne mensuelle",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   )
 
 
@@ -278,7 +286,6 @@ données_mensuelles <- données_mensuelles %>%
     Taux_Evolution = (Moyenne_Cotation - lag(Moyenne_Cotation)) / lag(Moyenne_Cotation) * 100) %>%
   ungroup()
 
-head(données_mensuelles)
 
 
 # Création des titres personnalisés pour les facettes
@@ -299,11 +306,18 @@ ggplot(données_mensuelles, aes(x = Mois, y = Taux_Evolution, color = Product)) 
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
         axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none") +
+        legend.position = "none",
+        plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+        plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5)
+  ) +
   theme_bw() +  
   labs(title = "Taux d'évolution mensuel des cotations fermées par matière première",
        subtitle = "Analyse basée sur les moyennes mensuelles",
-       x = "Mois", y = "Taux d'évolution (%)")
+       x = "Mois", y = "Taux d'évolution (%)",
+       subtitle = "source : Investing.com",
+       caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
+  )
+
 
 
 ###########################################################################
@@ -343,10 +357,19 @@ outliers <- association_data %>%
       Moyenne_Cacao < limites_cacao[1] | Moyenne_Cacao > limites_cacao[2]
   )
 
+# Modèle de régression linéaire simple
+modele <- lm(Moyenne_Cacao ~ Moyenne_Cafe, data = association_data)
+summary(modele)
+
+# Extraction des coefficients du modèle
+intercept <- round(coef(modele)[1], 4) 
+slope <- round(coef(modele)[2], 4)     
+equation <- paste0("Moyenne_Cacao = ", intercept, " + ", slope, " * Moyenne_Cafe") 
+
 
 # Diagramme de dispersion et corrélation
 ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
-  geom_point(color = "blue", size = 0.5) +  # Points
+  geom_point(color = "blue", size = 0.5) + 
   geom_point(data = outliers, aes(x = Moyenne_Cafe, y = Moyenne_Cacao), color = "blue", size = 0.7) + 
   geom_text(
     data = outliers, 
@@ -360,7 +383,9 @@ ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
   labs(
     title = "Association entre les cotations moyennes du café et du cacao",
     x = "Moyenne mensuelle du Café",
-    y = "Moyenne mensuelle du Cacao"
+    y = "Moyenne mensuelle du Cacao",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
   annotate("text", 
            x = min(association_data$Moyenne_Cafe), 
@@ -370,21 +395,17 @@ ggplot(association_data, aes(x = Moyenne_Cafe, y = Moyenne_Cacao)) +
            hjust = 0, 
            vjust = 1, 
            size = 3) + 
-  theme_minimal()
+  theme_minimal()+
+  theme(
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+  )
 
 
 # Corrélation
 correlation <- cor(association_data$Moyenne_Cafe, association_data$Moyenne_Cacao, use = "complete.obs")
 cat("Coefficient de corrélation :", correlation, "\n")
-
-# Extraction des coefficients du modèle
-intercept <- round(coef(modele)[1], 4)  # Ordonnée à l'origine
-slope <- round(coef(modele)[2], 4)      # Pente
-equation <- paste0("Moyenne_Cacao = ", intercept, " + ", slope, " * Moyenne_Cafe")  # Équation complète
-
-# Modèle de régression linéaire simple
-modele <- lm(Moyenne_Cacao ~ Moyenne_Cafe, data = association_data)
-summary(modele)
 
 
 # Coefficient de détermination
@@ -433,9 +454,17 @@ ggplot(brent_data, aes(x = Mois, y = Moyenne_Brent)) +
   labs(
     title = "Évolution de la cotation mensuelle du Brent",
     x = "Date",
-    y = "Moyenne mensuelle (USD)"
+    y = "Moyenne mensuelle (USD)",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
-  theme_minimal()
+  theme_minimal()+
+  theme(
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
 
 
 #2. diagramme des saisonnalités
@@ -461,13 +490,17 @@ ggplot(saisonnalite_annee, aes(x = Mois_simple, y = Moyenne_Brent, color = facto
     title = "Saisonnalité des moyennes mensuelles de la cotation du Brent",
     x = "Mois de l'année",
     y = "Moyenne mensuelle (USD)",
-    color = "Année"
+    color = "Année",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold"),
     axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.major = element_line(color = "grey90")
+    panel.grid.major = element_line(color = "grey90"),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
   )
 
 
@@ -488,25 +521,34 @@ ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
     date_labels = "%B %Y",
     name = "Mois de l'année"
   ) +
+  labs(
+    title = "Comportement de la moyenne mensuelle de cotation journalière du Brent depuis le 1er janvier 2020 ",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
+  ) +
+  
   theme_minimal() +
   theme(
     panel.grid.minor = element_blank(),
     axis.text.x = element_text(angle = 0),
     panel.grid.major = element_line(color = "#E5E5E5"),
-    axis.title.y = element_blank()
+    axis.title.y = element_blank(),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, face = "bold")
   )
 
 
 #4.
 
 # Définir t1 et t2 en termes de Year_Month
-t1 <- 2022 + 6 / 12  # Juin 2022
-t2 <- 2023 + 6 / 12  # Juin 2023
+t1 <- 2022 + 6 / 12 
+t2 <- 2023 + 6 / 12 
 brent_2020 <- brent_2020 %>%
   mutate(
     Year_Month = as.numeric(format(Mois, "%Y")) + as.numeric(format(Mois, "%m")) / 12,
-    Var_t1 = pmax(0, Year_Month - t1),  # Variable pour le point de coupure t1
-    Var_t2 = pmax(0, Year_Month - t2)   # Variable pour le point de coupure t2
+    Var_t1 = pmax(0, Year_Month - t1), 
+    Var_t2 = pmax(0, Year_Month - t2)  
   )
 # Ajuster le modèle
 model <- lm(Moyenne_Brent ~ Year_Month + Var_t1 + Var_t2, data = brent_2020)
@@ -517,25 +559,22 @@ summary(model)
 # Ajouter les prédictions pour chaque segment dans les données
 brent_2020 <- brent_2020 %>%
   mutate(
-    Predicted_Brent = predict(model)  # Basé sur le modèle ajusté avec Var_t1 et Var_t2
+    Predicted_Brent = predict(model)  
   )
 
 
 # Graphique avec les segments de régression
 ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
-  # Courbe des valeurs réelles
   geom_line(color = "steelblue", size = 1) +
-  # Lissage (courbe verte)
   geom_smooth(method = "loess", color = "red", size = 1, se = FALSE) +
-  # Ligne rouge pour la régression prédite
   geom_line(aes(y = Predicted_Brent), color ="green4", size = 1) +
-  # Ajout de lignes verticales pour marquer Var_t1 et Var_t2
   geom_vline(xintercept = as.Date(c("2022-06-01", "2023-06-01")), linetype = "dashed", color = "black", size = 1) +
-  # Ajout de labels et d'annotations
   labs(
     title = "Régression par morceaux avec ruptures en Juin 2022 et Juin 2023",
     x = "Date",
-    y = "Moyenne mensuelle du Brent (USD)"
+    y = "Moyenne mensuelle du Brent (USD)",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
   scale_x_date(
     breaks = seq(from = as.Date("2020-06-01"), 
@@ -544,58 +583,60 @@ ggplot(brent_2020, aes(x = Mois, y = Moyenne_Brent)) +
     date_labels = "%B %Y",
     name = "Mois de l'année"
   ) +
-  
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
 
 #5.
-# 1. Créer les dates pour les 26 prochains mois
+# Créer les dates pour les 26 prochains mois
 future_dates <- seq(from = max(brent_2020$Mois) + months(1), 
                     by = "month", length.out = 26)
 
-# 2. Créer un nouveau dataframe avec ces dates futures
+#  Créer un nouveau dataframe avec ces dates futures
 future_data <- data.frame(Mois = future_dates)
 future_data$Year_Month <- as.numeric(format(future_data$Mois, "%Y")) + as.numeric(format(future_data$Mois, "%m")) / 12
 future_data$Var_t1 <- pmax(0, future_data$Year_Month - t1)
 future_data$Var_t2 <- pmax(0, future_data$Year_Month - t2)
 
-# 3. Faire la prédiction pour les 26 prochains mois avec l'intervalle de prédiction
+#  Faire la prédiction pour les 26 prochains mois avec l'intervalle de prédiction
 future_predictions <- predict(model, newdata = future_data, interval = "prediction")
 
-# 4. Ajouter les prévisions et les intervalles dans le dataframe
+# Ajouter les prévisions et les intervalles dans le dataframe
 future_data$Predicted_Brent <- future_predictions[, "fit"]
 future_data$Lower_Brent <- future_predictions[, "lwr"]
 future_data$Upper_Brent <- future_predictions[, "upr"]
 
-# 5. Visualiser avec la courbe et la bande de confiance
+# Visualiser avec la courbe et la bande de confiance
 ggplot() +
-  # Courbe des valeurs réelles (sur brent_2020)
   geom_line(data = brent_2020, aes(x = Mois, y = Moyenne_Brent), color = "steelblue", size = 1) +
-  
-  # Lissage (courbe rouge) sur les données réelles avec aes() correctement spécifié
-  geom_smooth(data = brent_2020, aes(x = Mois, y = Moyenne_Brent), method = "loess", color = "red", size = 1, se = FALSE) +
-  
-  # Ligne des prédictions pour les mois futurs (sur future_data)
+    geom_smooth(data = brent_2020, aes(x = Mois, y = Moyenne_Brent), method = "loess", color = "red", size = 1, se = FALSE) +
   geom_line(data = future_data, aes(x = Mois, y = Predicted_Brent), color = "darkgreen", size = 1) +
-  
-  # Bande de confiance pour les prédictions futures (en utilisant Lower_Brent et Upper_Brent)
   geom_ribbon(data = future_data, aes(x = Mois, ymin = Lower_Brent, ymax = Upper_Brent), fill = "chocolate3", alpha = 0.2) +
-  # Ajouter des pointillés noirs au-dessus des bandes de confiance
   geom_line(data = future_data, aes(x = Mois, y = Upper_Brent), color = "black", linetype = "dashed", size = 0.3) +
   geom_line(data = future_data, aes(x = Mois, y = Lower_Brent), color = "black", linetype = "dashed", size = 0.3) +
-  
-  # Ajout de labels et d'annotations
   labs(
     title = "Régression par morceaux avec prévisions et bande de confiance pour les 26 prochains mois",
     x = "Date",
-    y = "Moyenne mensuelle du Brent (USD)"
+    y = "Moyenne mensuelle du Brent (USD)",
+    subtitle = "source : Investing.com",
+    caption = c("BUT Science des données - Lisieux", "Auteurs : Rasmata, Romain, Courteney,Sidy")
   ) +
-  
-  # Définir l'échelle des dates avec une fréquence annuelle en janvier
   scale_x_date(
     breaks = seq(from = as.Date("2020-01-01"), to = max(future_data$Mois), by = "1 year"),
-    date_labels = "%B %Y",  # Afficher le mois et l'année sous forme de "Janvier 2020"
+    date_labels = "%B %Y", 
     name = "Mois de l'année"
   ) +
-  
-  theme_minimal()
+  theme_minimal()+
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.caption = element_text(hjust = c(0,1), size = 10, face = "bold", color = "black"),
+    plot.subtitle = element_text(size = 12, color = "darkblue", hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
 
