@@ -1,0 +1,212 @@
+# Analyse des séries temporelles
+
+## Introduction
+
+Dans le cadre de notre projet, nous avons réalisé une analyse des séries temporelles sur différentes données historiques. Les données utilisées proviennent de plusieurs sources et concernent divers produits tels que le café, le cacao, le jus d'orange, le sucre et le pétrole.
+
+## Descriptif du projet
+
+Ce projet se concentre sur l'analyse des séries temporelles de cotations de plusieurs matières premières, collectées depuis le site Investing.com. Les données couvrent la période du 1er janvier 2010 à nos jours et comprennent des informations sur :
+
+- Café (Futures café US C - Devise USD)
+- Cacao (Futures cacao US - Devise USD)
+- Jus d'orange (Futures jus d'orange - Devise USD)
+- Sucre (Futures sucre Londres - Devise USD)
+- Pétrole (Futures pétrole Brent - Devise USD)
+
+L'objectif principal est de regrouper, analyser et visualiser les tendances de ces séries temporelles afin de dégager des informations clés sur les variations de cotations.
+
+## Méthodologie
+
+Pour mener à bien cette analyse, nous avons utilisé plusieurs librairies R pour extraire, traiter et analyser les données. Voici le code utilisé pour installer et charger les librairies nécessaires, ainsi que pour extraire et traiter les données des fichiers PDF.
+
+```r
+#' ---
+#' titre: "Analyse des séries temporelles"
+#' author: "Rasmata Sawadogo, Courteney Saint-Hubert, Sidy Diop, Romain Lesueur" 
+#' date: "28/11/2024"
+#' ---
+
+#=======================================================================#
+# IUT GON - Description et prévision de données temporelles
+# Données :  - Café (Futures café US C - Devise USD)
+             - Cacao (Futures cacao US - Devise USD)
+             - Jus d'orange (Futures jus d'orange - Devise USD)
+             - Sucre (Futures sucre Londres - Devise USD)
+             - Pétrole (Futures pétrole Brent - Devise USD)
+# Source : https://Investing.com
+#=======================================================================#
+
+# Mission 1 
+
+# Liste des librairies nécessaires
+libraries <- c("tabulapdf", "tidyverse", "dplyr", "data.table", "ggplot2", "lubridate")
+
+# Fonction pour installer les librairies manquantes
+install_if_missing <- function(libs) {
+  for (lib in libs) {
+    if (!require(lib, character.only = TRUE)) {
+      install.packages(lib, dependencies = TRUE)
+      library(lib, character.only = TRUE)
+    }
+  }
+}
+
+# Installation et chargement des librairies
+install_if_missing(libraries)
+
+
+# Extraction des données des fichiers PDF
+café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
+                            method = "decide", 
+                            encoding = "UTF-8",
+                            col_names = FALSE,
+                            dec = ",",
+                            output = "tibble")
+
+cacao_data <- extract_tables("Futures cacao US - Données Historiques.pdf",
+                             method = "decide", 
+                             encoding = "UTF-8",
+                             col_names = FALSE,
+                             output = "tibble")
+
+jus_orange_data <- extract_tables("Futures jus dorange - Données Historiques.pdf",
+                                  method = "decide", 
+                                  encoding = "UTF-8",
+                                  col_names = FALSE,
+                                  output = "tibble")
+
+sucre_data <- extract_tables("Futures sucre Londres - Données Historiques.pdf",
+                             method = "decide", 
+                             encoding = "UTF-8",
+                             col_names = FALSE,
+                             output = "tibble")
+
+petrol_data <- extract_text("Futures pétrole Brent - Données Historiques.pdf")
+
+
+# Combinaison et traitement des tables pour chaque produit
+
+# Pour le café
+data_cafe <- as_tibble(rbindlist(café_data, fill = TRUE)) %>%
+  rename(
+    Date = X1, 
+    Closed_Cotation = X2, 
+    Opened_Cotation = X3, 
+    Highest_Cotation = X4, 
+    Lowest_Cotation = X5
+  ) %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation))/100, 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", Opened_Cotation))/100, 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", Highest_Cotation))/100, 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", Lowest_Cotation))/100, 2)
+  )
+
+# Pour le cacao
+data_cacao <- as_tibble(rbindlist(cacao_data, fill = TRUE)) %>%
+  rename(
+    Date = X1, 
+    Closed_Cotation = X2, 
+    Opened_Cotation = X3, 
+    Highest_Cotation = X4, 
+    Lowest_Cotation = X5
+  ) %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
+  )%>%
+  drop_na()
+
+
+# Pour le jus d'orange
+data_jus_orange <- as_tibble(rbindlist(jus_orange_data, fill = TRUE)) %>%
+  rename(Date = X1, 
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
+  )
+
+# Pour le sucre
+data_sucre <- as_tibble(rbindlist(sucre_data, fill = TRUE)) %>%
+  rename(Date = X1, 
+         Closed_Cotation = X2, 
+         Opened_Cotation = X3, 
+         Highest_Cotation = X4, 
+         Lowest_Cotation = X5) %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Closed_Cotation))), 2),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Opened_Cotation))), 2),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Highest_Cotation))), 2),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", gsub("\\.", "", Lowest_Cotation))), 2)
+  )
+
+# Pour le pétrole
+
+# Diviser les données en lignes
+lines <- unlist(strsplit(petrol_data, "\n"))
+
+# Filtrer les lignes contenant "Page" ou "Futures pétrole Brent" et les ignorer
+lines_cleaned <- lines[!grepl("Page|Futures pétrole Brent", lines)]
+
+# Filtrer les lignes contenant des dates 
+data_lines <- lines[str_detect(lines, "^[0-9]{2}/[0-9]{2}/[0-9]{4}")]
+
+# Séparer les colonnes en utilisant des espaces multiples comme séparateurs
+split_data <- str_split(data_lines, "\\s+", simplify = TRUE)
+
+# Ajouter des noms de colonnes
+colnames(split_data) <- c("Date", "Closed_Cotation", "Opened_Cotation", "Highest_Cotation", "Lowest_Cotation")
+
+# Convertir en tibble
+split_data_tibble <- as_tibble(split_data)
+
+# Transformation des colonnes
+data_petrol <- split_data_tibble %>%
+  mutate(
+    Date = as.Date(Date, format = "%d/%m/%Y"),
+    Closed_Cotation = round(as.numeric(gsub(",", ".", Closed_Cotation)), 3),
+    Opened_Cotation = round(as.numeric(gsub(",", ".", Opened_Cotation)), 3),
+    Highest_Cotation = round(as.numeric(gsub(",", ".", Highest_Cotation)), 3),
+    Lowest_Cotation = round(as.numeric(gsub(",", ".", Lowest_Cotation)), 3)
+  )
+
+
+# Fusion de toutes les données en un seul dataset
+dataset <- bind_rows(
+  data_cafe %>% mutate(Product = "Café"),
+  data_cacao %>% mutate(Product = "Cacao"),
+  data_jus_orange %>% mutate(Product = "Jus d'Orange"),
+  data_sucre %>% mutate(Product = "Sucre"),
+  data_petrol %>% mutate(Product = "Pétrole")
+)
+dataset <- dataset %>% mutate(Product = as.factor(Product))
+
+
+# Affichage des premières lignes pour vérification
+head(dataset)
+str(dataset)
+colnames(dataset)
+```
+
+## Difficultés rencontrées
+
+Lors du traitement des données du fichier PDF "Futures pétrole Brent - Données Historiques.pdf", nous avons rencontré plusieurs difficultés. La fonction `extract_tables` de la librairie `tabulapdf` ne fonctionnait pas correctement sur ce fichier. Après avoir analysé les données et consulté la documentation, nous avons identifié que le problème était lié à l'écart entre les colonnes "Dernier" et "Ouv.".
+
+Cet écart devenait parfois trop faible pour être détecté par la fonction `extract_tables()`, même en modifiant les paramètres. Lorsque les valeurs dans l'une de ces colonnes atteignaient le format XXX,XXX, les valeurs de "Ouv." fusionnaient avec celles de "Dernier", créant ainsi de nombreux N/A. De plus, sur certaines pages, la dernière colonne n'était tout simplement plus détectée.
+
+Nous avons essayé plusieurs solutions pour résoudre ce problème, notamment en utilisant les arguments `columns`, `area` et `guess = FALSE` de la fonction, mais sans succès. Nous avons également envisagé d'utiliser des patterns regex pour ajuster les données, mais cela s'est avéré trop complexe et fastidieux.
+
+Finalement, nous avons trouvé une alternative en utilisant la fonction `extract_text` de la même librairie. Cette fonction a permis d'extraire les données de manière plus propre, et avec un peu de traitement, nous avons pu remettre en ordre les données pour les analyser correctement.
