@@ -28,14 +28,6 @@ install_if_missing <- function(libs) {
 # Installation des librairies manquantes
 install_if_missing(libraries)
 
-# Chargement des librairies
-library(tabulapdf)
-library(tidyverse)
-library(dplyr)
-library(data.table)
-library(ggplot2)
-library(lubridate)
-
 # Extraction des données des fichiers PDF
 café_data <- extract_tables("Futures café US C - Données Historiques.pdf",
                             method = "decide", 
